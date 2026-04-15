@@ -6,13 +6,14 @@ import re
 from utils.date_util import resolve_date
 
 release_date_patterns = [
-    r"(\d{4}-\d{2}-\d{2})\s*发布",
-    r"发布日期[:：]\s*(\d{4}\s*年\s*\d{2}\s*月\s*\d{2}\s*日)"
+    r"(\d{4}-\d+-\d+)\s*发布",
+    r"发布日期[:：]\s*(\d+\s*年\s*\d+\s*月\s*\d+\s*日)"
 ]
 
 effective_date_patterns = [
-    r"实施日期[:：]\s*(\d{4}\s*年\s*\d{2}\s*月\s*\d{2}\s*日)",
-    r"(\d{4}-\d{2}-\d{2})\s*实施",
+    r"实施日期[:：]\s*(\d+\s*年\s*\d+\s*月\s*\d+\s*日)",
+    r"实行日期[:：]\s*(\d+\s*年\s*\d+\s*月\s*\d+\s*日)"
+    r"(\d{4}-\d+-\d+)\s*实施",
 ]
 
 approved_date_patterns = [

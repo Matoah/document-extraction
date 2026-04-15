@@ -143,3 +143,61 @@ def get_toc(specification_code: str, document_name: str, toc: str) -> dict:
     with cache_file.open("r", encoding="utf-8") as f:
         cache_data = json.load(f)
         return cache_data.get("data", {})
+
+def _get_term_cache_path(specification_code: str, document_name: str, term_content: str) -> Path:
+    """获取通知缓存路径"""
+    md5 = hashlib.md5(term_content.encode(encoding="utf-8")).hexdigest()
+    return resolve_file_path(_get_document_cache_path(specification_code, document_name), "term",
+                             file_name=f"{md5}.json")
+
+def exist_term_cache(specification_code: str, document_name: str, term_content: str) -> bool:
+    """检查是否存在术语缓存"""
+    cache_file = _get_term_cache_path(specification_code, document_name, term_content)
+    return cache_file.exists()
+
+def cache_term(specification_code: str, document_name: str, term_content: str, data: dict):
+    """缓存术语"""
+    cache_file = _get_term_cache_path(specification_code, document_name, term_content)
+    cache_data = {
+        "term": term_content,
+        "data": data
+    }
+    cache_file.parent.mkdir(parents=True, exist_ok=True)
+    cache_file.write_text(json.dumps(cache_data, ensure_ascii=False, indent=4), encoding="utf-8")
+
+def get_term(specification_code: str, document_name: str, term_content: str) -> dict:
+    """获取术语缓存"""
+    cache_file = _get_term_cache_path(specification_code, document_name, term_content)
+    with cache_file.open("r", encoding="utf-8") as f:
+        cache_data = json.load(f)
+        return cache_data.get("data", {})
+
+def _get_symbol_cache_path(specification_code: str, document_name: str, symbol: str) -> Path:
+    """获取符号缓存路径"""
+    md5 = hashlib.md5(symbol.encode(encoding="utf-8")).hexdigest()
+    return resolve_file_path(_get_document_cache_path(specification_code, document_name), "symbol",
+                             file_name=f"{md5}.json")
+
+def exist_symbol_cache(specification_code: str, document_name: str, symbol: str) -> bool:
+    """检查是否存在符号缓存"""
+    cache_file = _get_symbol_cache_path(specification_code, document_name, symbol)
+    return cache_file.exists()
+
+def cache_symbol(specification_code: str, document_name: str, symbol: str, data: dict):
+    """缓存符号"""
+    cache_file = _get_symbol_cache_path(specification_code, document_name, symbol)
+    cache_data = {
+        "symbol": symbol,
+        "data": data
+    }
+    cache_file.parent.mkdir(parents=True, exist_ok=True)
+    cache_file.write_text(json.dumps(cache_data, ensure_ascii=False, indent=4), encoding="utf-8")
+
+def get_symbol(specification_code: str, document_name: str, symbol: str) -> dict:
+    """获取符号缓存"""
+    cache_file = _get_symbol_cache_path(specification_code, document_name, symbol)
+    with cache_file.open("r", encoding="utf-8") as f:
+        cache_data = json.load(f)
+        return cache_data.get("data", {})
+
+

@@ -6,7 +6,7 @@ from knowledge.model.node import Node
 from model.table import Table
 from knowledge.utils.content_item_util import is_atomic__item
 import logging
-from knowledge.utils.token_util import count_tokens
+from utils.token_util import count_tokens
 from knowledge.utils.html_util import split_table_by_token_count
 
 logger = logging.getLogger(__name__)
@@ -18,12 +18,13 @@ class SizeSplitter(Splitter):
 
     def __init__(
             self,
+            doc_name: str,
             content: list[DocumentContentItem],
             min_token_count: int,
             token_count: int,
             max_token_count: int
     ):
-        super().__init__(content, min_token_count, token_count, max_token_count)
+        super().__init__(doc_name,content, min_token_count, token_count, max_token_count)
         self.chunks: list[Chunk] = []
 
     def _split_str_content(self, current_chunk: Chunk, current_node: Node, content_item: DocumentContentItem,

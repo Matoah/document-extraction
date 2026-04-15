@@ -6,6 +6,7 @@ from model.organization import Organization
 from role.notice import Notice, NoticeInfo
 from utils.document_util import get_doc_page_index
 from utils.paragraph_util import to_text
+from utils.mineru_util import enhance
 from model.notice import Notice as NoticeModel
 from cache.cache import cache_notice, get_notice, exist_notice_cache
 import logging
@@ -51,6 +52,7 @@ def notice_parser(state: PageState, runtime: Runtime[PageContext]):
     page_index = state.page_index
     page_count = _get_notice_page_count(page_index, page_list)
     notice_content = _get_content(page_index, page_count, page_list)
+    notice_content = enhance(notice_content)
     document_name = runtime.context.document_state.origin_document.name
     # 检查是否存在缓存
     if exist_notice_cache(state.specification_code, document_name, notice_content):

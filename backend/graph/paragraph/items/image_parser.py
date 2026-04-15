@@ -2,7 +2,7 @@ from graph.paragraph.state.paragraph_context import ParagraphContext
 from graph.paragraph.state.paragraph_state import ParagraphState
 from model.image import Image
 from langgraph.runtime import Runtime
-
+from utils.mineru_util import enhance
 from utils.document_util import get_doc_page_index
 
 
@@ -49,8 +49,9 @@ def image_parser(state: ParagraphState, runtime: Runtime[ParagraphContext]):
     image_path = paragraph.get("img_path", "")
     image_caption = paragraph.get("image_caption", [])
     # 移除image_caption中的空字符串及None值
-    image_caption = [caption.strip() for caption in image_caption if caption.strip()]
+    image_caption = [enhance(caption.strip()) for caption in image_caption if caption.strip()]
     image_footnote = paragraph.get("image_footnote", [])
+    image_footnote = [enhance(footnote) for footnote in image_footnote]
     doc_page_index = get_doc_page_index(page_index, 1, context.page_list)
     return {
         "result": Image(

@@ -5,7 +5,6 @@ from parser.document_parser import DocumentParser
 from graph.document.index import invoke
 import logging
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -30,5 +29,5 @@ def standard_specification_config_parser(state: MainState):
         logger.info(f"开始解析文件:{origin_document.name}")
         document_state = invoke(specification_code=standard_specification_config.code, document_name=file_path.name,
                                 origin_document=origin_document, standard_specification=state.standard_specification)
-        document_list.append(document_state.document)
+        document_list.append(document_state.get("document"))
     return state

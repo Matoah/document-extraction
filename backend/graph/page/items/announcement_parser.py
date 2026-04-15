@@ -5,6 +5,7 @@ from langgraph.runtime import Runtime
 from graph.page.state.page_context import PageContext
 from utils.document_util import get_doc_page_index
 from utils.paragraph_util import get_content
+from utils.mineru_util import enhance
 from model.announcement import Announcement as AnnouncementModel
 from cache.cache import exist_announcement_cache, cache_announcement, get_announcement
 import logging
@@ -47,6 +48,7 @@ def announcement_parser(state: PageState, runtime: Runtime[PageContext]):
     page_index = state.page_index
     page_count = _get_announcement_page_count(page_index, page_list)
     announcement_content = _get_content(page_index, page_count, page_list)
+    announcement_content = enhance(announcement_content)
     # 检查是否存在缓存
     document_name = runtime.context.document_state.origin_document.name
     if exist_announcement_cache(state.specification_code, document_name, announcement_content):

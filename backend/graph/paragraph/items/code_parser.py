@@ -3,6 +3,7 @@ from model.code import Code
 from langgraph.runtime import Runtime
 from graph.paragraph.state.paragraph_context import ParagraphContext
 from utils.document_util import get_doc_page_index
+from utils.mineru_util import enhance
 
 
 def code_parser(state: ParagraphState, runtime: Runtime[ParagraphContext]):
@@ -10,6 +11,7 @@ def code_parser(state: ParagraphState, runtime: Runtime[ParagraphContext]):
     context = runtime.context
     paragraph = state.paragraph
     code_caption = paragraph.get("code_caption", [])
+    code_caption = [enhance(caption) for caption in code_caption]
     code_body = paragraph.get("code_body", "")
     code_language = paragraph.get("guess_lang", "")
     doc_page_index = get_doc_page_index(context.page_index, 1, context.page_list)

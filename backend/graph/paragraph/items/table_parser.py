@@ -2,7 +2,7 @@ from graph.paragraph.state.paragraph_context import ParagraphContext
 from graph.paragraph.state.paragraph_state import ParagraphState
 from model.table import Table
 from langgraph.runtime import Runtime
-
+from utils.mineru_util import enhance
 from utils.document_util import get_doc_page_index
 
 
@@ -60,7 +60,9 @@ def table_parser(state: ParagraphState, runtime: Runtime[ParagraphContext]):
     paragraph = state.paragraph
     img_path = paragraph.get("img_path", "")
     table_caption = paragraph.get("table_caption", [])
+    table_caption = [enhance(caption) for caption in table_caption]
     table_footnote = paragraph.get("table_footnote", [])
+    table_footnote = [enhance(footnote) for footnote in table_footnote]
     table_body = paragraph.get("table_body", "")
     doc_page_index = get_doc_page_index(page_index, 1, context.page_list)
     code, is_continued = _get_code(table_caption)

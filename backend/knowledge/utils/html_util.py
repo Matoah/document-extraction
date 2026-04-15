@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from knowledge.utils.token_util import count_tokens
+from utils.token_util import count_tokens
 import copy
 import logging
 

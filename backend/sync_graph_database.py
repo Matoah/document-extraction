@@ -117,7 +117,8 @@ def org_id(d): return "组织机构", {"组织机构名称": d.get("name")}
 def announcement_id(d): return "公告", {"编号": d.get("code")}
 def notice_id(d): return "通知", {"编号": d.get("code")}
 def content_id(d): return "文档内容", {"编号": d.get("code")}
-
+def term_id(d): return "术语", {"名称": d.get("name_zh")}
+def symbol_id(d): return "符号", {"符号": d.get("symbol")}
 
 # ------------------ 通用关系封装 ------------------
 
@@ -128,6 +129,20 @@ def link_people(source, rel, people):
             pid = person_id(p)
             merge_node(pid[0], pid[1])
             merge_relationship(source[0], source[1], rel, pid[0], pid[1])
+
+def link_terms(source, rel, terms):
+    for term in terms or []:
+        if term:
+            tid = term_id(term)
+            merge_node(tid[0], tid[1])
+            merge_relationship(source[0], source[1], rel, tid[0], tid[1])
+
+def link_symbols(source, rel, symbols):
+    for symbol in symbols or []:
+        if symbol:
+            sid = symbol_id(symbol)
+            merge_node(sid[0], sid[1])
+            merge_relationship(source[0], source[1], rel, sid[0], sid[1])
 
 
 def link_orgs(source, rel, orgs):
@@ -195,6 +210,10 @@ def gen_document(spec, docs):
         link_orgs(did, "主编单位", d.get("chief_editor_organization"))
         link_orgs(did, "参编单位", d.get("participating_organization"))
         link_orgs(did, "联系单位", d.get("contact_organization"))
+
+        link_people(did, "术语", d.get("term_list"))
+
+        link_symbols(did, "符号", d.get("symbol_list"))
 
         for c in d.get("content_list", []):
             handle_content(did, d["name"], c)

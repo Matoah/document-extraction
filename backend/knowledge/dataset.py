@@ -47,52 +47,39 @@ class Dataset:
         dataset_id = get_dataset_id()
         md5_metadata = Dataset._get_md5_metadata(dataset_id)
         document_import_status: list[DocumentImportResult] = []
+        for i, spec_data in enumerate(self._spec_data_list):
+            spec_code = spec_data.get("standard_specification").get("code")
+            logger.info(f"正在处理标准规范：{spec_code} {i+1}/{len(self._spec_data_list)}")
+            document_list = spec_data.get("document_list", [])
+            for document in document_list:
+                doc = Document(dataset_id, spec_code, document, md5_metadata)
+                result = doc.import_data()
+                document_import_status.append(result)
+        statistics_info = {
+            DocumentStatus.NO_CHANGED: 0,
+            DocumentStatus.ERROR: 0,
+            DocumentStatus.WAITING: 0,
+            DocumentStatus.PARSING: 0,
+            DocumentStatus.CLEANING: 0,
+            DocumentStatus.SPLITTING: 0,
+            DocumentStatus.INDEXING: 0,
+            DocumentStatus.COMPLETED: 0
+        }
+        for doc in document_import_status:
+            statistics_info[doc.status] += 1
         while True:
-            statistics_info = {
-                DocumentStatus.NO_CHANGED: 0,
-                DocumentStatus.ERROR: 0,
-                DocumentStatus.WAITING: 0,
-                DocumentStatus.PARSING: 0,
-                DocumentStatus.CLEANING: 0,
-                DocumentStatus.SPLITTING: 0,
-                DocumentStatus.INDEXING: 0,
-                DocumentStatus.COMPLETED: 0
-            }
-            for doc in document_import_status:
-                statistics_info[doc.status] += 1
-            doing_count = sum([statistics_info[status] for status in statistics_info if status not in [DocumentStatus.NO_CHANGED, DocumentStatus.ERROR, DocumentStatus.COMPLETED]])
-            if doing_count < 4:
-                next_upload_doc = None
-                next_spec_code = None
-                for spec_data in self._spec_data_list:
-                    spec_code = spec_data.get("standard_specification").get("code")
-                    document_list = spec_data.get("document_list", [])
-                    for document in document_list:
-                        doc_name = document.get("name")
-                        upload_flag = False
-                        for result in document_import_status:
-                            if result.name == doc_name:
-                                upload_flag = True
-                                break
-                        if upload_flag:
-                            continue
-                        next_upload_doc = document
-                        next_spec_code = spec_code
-                        break
-                    if next_upload_doc:
-                        break
-                if next_upload_doc:
-                    doc = Document(dataset_id, next_spec_code, next_upload_doc, md5_metadata)
-                    result = doc.import_data()
-                    document_import_status.append(result)
+            doing_result = [result for result in document_import_status if result.status not in [DocumentStatus.NO_CHANGED, DocumentStatus.ERROR, DocumentStatus.COMPLETED]]
+            if doing_result:
+                for result in doing_result:
+                    statistics_info[result.status] -= 1
+                    status = get_document_status(dataset_id, result.batch)
+                    result.status = DocumentStatus(status)
                     statistics_info[result.status] += 1
-                    if result.status in [DocumentStatus.NO_CHANGED, DocumentStatus.ERROR, DocumentStatus.COMPLETED]:
-                        continue
-                else:
-                    break
+            else:
+                break
             logger.info("*" * 30)
             logger.info(f"当前文档状态统计: ")
             for key, value in statistics_info.items():
                 logger.info(f"{NAME_DICT[key]}: {value}")
-            time.sleep(5)
+            time.sleep(1)
         logger.info("所有文档导入完成")

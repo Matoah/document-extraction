@@ -19,6 +19,8 @@ class LLM(ABC):
         api_url_base = os.getenv("COMPLETION_API_BASE")
         model = os.getenv("COMPLETION_MODEL")
         enable_thinking = os.getenv("COMPLETION_ENABLE_THINKING")
+        temperature = float(os.getenv("COMPLETION_TEMPERATURE"))
+        max_tokens = int(os.getenv("COMPLETION_MAX_TOKEN"))
         if enable_thinking == "False":
             enable_thinking = False
         else:
@@ -27,8 +29,8 @@ class LLM(ABC):
             api_key=api_key,
             base_url=api_url_base,
             model=model,
-            max_tokens=4096,
-            temperature=0.1,
+            max_tokens=max_tokens,
+            temperature=temperature,
             extra_body={
                 "chat_template_kwargs":{
                     "enable_thinking": enable_thinking
@@ -47,6 +49,7 @@ class LLM(ABC):
         human_message = HumanMessage(content=user_input)
         messages = [SystemMessage(content=system_prompt), human_message]
         start_time = time.time()
+        logger.info(f"正在调用大模型，请稍候...")
         response = self._client.invoke(messages)
         logger.info(f"大模型响应时间：{time.time() - start_time}秒")
         return response.content
@@ -66,13 +69,16 @@ class JsonLLM[T](LLM):
     def ask(self, user_input: str) -> T:
         """向大模型提问，返回JSON对象"""
         system_prompt = self._build_system_prompt()
-        error_msg = "无"
+        error_msg = ""
         try_count = 0
         while try_count < self._max_retry:
-            human_message = f"内容：\n{user_input}\n错误信息：\n{error_msg}"
+            human_message = f"内容：\n{user_input}"
+            if error_msg:
+                human_message += f"\n错误信息：\n{error_msg}"
             messages = [SystemMessage(content=system_prompt), HumanMessage(content=human_message)]
             try:
                 start_time = time.time()
+                logger.info(f"正在调用大模型，请稍候...")
                 response = self._client.invoke(messages)
                 logger.info(f"大模型响应时间：{time.time() - start_time}秒")
                 response_content, obj = try_parse_json_object(response.content)

@@ -1,5 +1,5 @@
 from type.document_content_item import DocumentContentItem
-from knowledge.utils.token_util import count_tokens
+from utils.token_util import count_tokens
 from typing import Union
 
 class Node:

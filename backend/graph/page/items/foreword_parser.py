@@ -4,6 +4,7 @@ from model.organization import Organization
 from model.person import Person
 from utils.document_util import get_doc_page_index, merge_doc_organization_list, merge_doc_person_list
 from utils.paragraph_util import to_text
+from utils.mineru_util import enhance
 from langgraph.runtime import Runtime
 from role.foreword import Foreword, ForewordInfo
 from model.foreword import Foreword as ForewordModel
@@ -77,6 +78,7 @@ def foreword_parser(state: PageState, runtime: Runtime[PageContext]):
     page_index = state.page_index
     page_count = _get_foreword_page_count(page_index, page_list)
     foreword_content = _get_content(page_index, page_count, page_list)
+    foreword_content = enhance(foreword_content)
     document_name = runtime.context.document_state.origin_document.name
     # 检查是否存在缓存
     if exist_foreword_cache(state.specification_code, document_name, foreword_content):

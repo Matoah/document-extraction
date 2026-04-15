@@ -32,7 +32,11 @@ class Document:
         self.max_token_count = int(os.getenv("KNOWLEDGE_MAX_TOKEN_COUNT"))
 
     def _is_need_upload(self):
-        """判断是否需要上传文档"""
+        """
+            判断是否需要上传文档，判断依据：
+            1、知识库中对应文档是否存在
+            2、知识库中对应文档的md5是否一致
+        """
         knowledge_document_list = get_document_list(self._dataset_id)
         need_upload = False
         doc_name = self._data.get("name")
@@ -84,7 +88,7 @@ class Document:
             chunk_list = content.split(splitter_str)
         else:
             content_list = [create(item) for item in self._data.get("content_list", [])]
-            splitter = SizeSplitter(content_list, self.min_token_count, self.token_count, self.max_token_count)
+            splitter = SizeSplitter(doc_name, content_list, self.min_token_count, self.token_count, self.max_token_count)
             chunk_list = splitter.split()
             cache_markdown(self._spec_code, doc_name, splitter_str.join(chunk_list))
         return chunk_list

@@ -5,8 +5,9 @@ from dotenv import load_dotenv
 import json
 import logging
 from utils.path_util import resolve_file_path
+import traceback
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 logger = logging.getLogger(__name__)
 
@@ -46,5 +47,6 @@ for index,standard_specification_config in enumerate(standard_specification_conf
         output_file_path.parent.mkdir(parents=True, exist_ok=True)
         output_file_path.write_text(json.dumps(data, ensure_ascii=False, indent=4))
     except Exception as e:
+        traceback.print_exc()
         logger.error(f"处理标准规范【{standard_specification_config.code}】时出错：{e}")
         continue

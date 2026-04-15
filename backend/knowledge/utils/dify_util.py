@@ -1,5 +1,6 @@
 import os
-from requests import get, post, exceptions, delete
+from requests import exceptions
+from utils.request_util import post, get, delete
 from pathlib import Path
 import hashlib
 from knowledge.cache.file_cache import exists,get_cache,set_cache
@@ -7,7 +8,6 @@ import tempfile
 import json
 import re
 import logging
-import time
 from typing import TypedDict, Any
 
 
@@ -46,15 +46,11 @@ class Metadata(TypedDict):
 
 def _post(uri: str, headers: dict, data: dict | None = None, files: dict | None = None, json: dict | None = None):
     """post请求"""
-    response = post(f"{os.getenv("KNOWLEDGE_BASE_URI")}/{uri}",headers=headers,data=data,  files=files, json=json)
-    response.raise_for_status()
-    return response
+    return post(f"{os.getenv("KNOWLEDGE_BASE_URI")}/{uri}",headers=headers,data=data,  files=files, json=json)
 
 def _get(uri: str, headers: dict, data: dict):
     """get请求"""
-    response = get(f"{os.getenv("KNOWLEDGE_BASE_URI")}/{uri}",headers=headers,params=data)
-    response.raise_for_status()
-    return response
+    return get(f"{os.getenv("KNOWLEDGE_BASE_URI")}/{uri}",headers=headers,params=data)
 
 def get_dataset_id():
     """获取知识库ID"""
@@ -93,22 +89,29 @@ def upload_file(abs_path: str | Path) -> str:
     if not path.exists():
         raise FileNotFoundError(f"文件 {path} 不存在")
     md5 = hashlib.md5(path.read_bytes()).hexdigest()
-    if exists(md5):
-        return get_cache(md5)
+    uri = "files/upload"
+    json_str = json.dumps({
+        "md5": md5,
+        "url": f"{os.getenv("KNOWLEDGE_BASE_URI")}/{uri}"
+    })
+    # 将json_str转换成md5
+    cache_key = hashlib.md5(json_str.encode()).hexdigest()
+    if exists(cache_key):
+        return get_cache(cache_key)
     mime_type = _get_mime_type(path.suffix)
     with open(path, "rb") as file:
         files = {
             "file": (path.name, file, mime_type)
         }
         response = _post(
-            uri="files/upload",
+            uri=uri,
             headers = {"Authorization": f"Bearer {os.getenv('KNOWLEDGE_WORKFLOW_API_KEY')}"},
             data = {"user": os.getenv("KNOWLEDGE_USER_ID")},
             files=files
         )
         result = response.json()
         file_id = result["id"] if "id" in result else str(result)
-        set_cache(md5, file_id)
+        set_cache(cache_key, file_id)
         return file_id
 
 def to_preview_url(file_id: str) -> str:
@@ -174,12 +177,9 @@ def get_document_status(dataset_id: str, batch: str) -> str:
         'Authorization': f'Bearer {os.getenv("KNOWLEDGE_API_KEY")}',
     }
     data = {}
-
     response = _get(uri=uri, headers=headers, data=data)
     result = response.json()
     data = result.get("data",[])
-    if not data:
-        return False
     return data[0].get('indexing_status')
 
 def _create_empty_document_by_text(dataset_id: str, document_name: str, chunk_list: list[str]) -> tuple[str, str]:

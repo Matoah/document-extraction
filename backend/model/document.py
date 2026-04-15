@@ -9,6 +9,8 @@ from model.announcement import Announcement
 from model.code import Code
 from model.image import Image
 from model.notice import Notice
+from model.symbol import Symbol
+from model.term import Term
 from model.toc import TOC
 from model.table import Table
 from model.text import Text
@@ -50,6 +52,10 @@ class Document(BaseModel):
     content_list: list[Union[
         Announcement, Code, Equation, Image, Notice, TOC, Table, Text, Foreword]] = Field(
         default_factory=list, description="内容列表")
+
+    term_list: list[Term] = Field(default_factory=list, description="术语")
+
+    symbol_list: list[Symbol] = Field(default_factory=list, description="符号")
 
     @classmethod
     def from_original_document(cls, origin_document: OriginDocument) -> Self:

@@ -2,7 +2,7 @@ from graph.paragraph.state.paragraph_context import ParagraphContext
 from graph.paragraph.state.paragraph_state import ParagraphState
 from model.text import Text
 from langgraph.runtime import Runtime
-
+from utils.mineru_util import enhance
 from utils.document_util import get_doc_page_index
 
 
@@ -12,6 +12,7 @@ def text_parser(state: ParagraphState, runtime: Runtime[ParagraphContext]):
     page_index = context.page_index
     paragraph = state.paragraph
     text = paragraph.get("text", "")
+    text = enhance(text)
     text_level = paragraph.get("text_level", 0)
     doc_page_index = get_doc_page_index(page_index, 1, context.page_list)
     return {

@@ -1,6 +1,7 @@
 from enums.standard import StandardNature
 from graph.main.state.main_state import MainState
 
+
 def detect_type(name):
     """根据标准规范名称检测类型"""
     mapping = {
@@ -19,6 +20,7 @@ def detect_type(name):
             return v
     return "unknown"
 
+
 def detect_stage(name):
     """根据标准规范名称检测生命周期阶段"""
     if "设计" in name:
@@ -30,6 +32,7 @@ def detect_stage(name):
     if "检测" in name or "试验" in name:
         return "检测阶段"
     return "全生命周期"
+
 
 def classify(name):
     # 一级分类
@@ -68,6 +71,7 @@ def classify(name):
 
     return level1, level2
 
+
 def extract_keywords(name):
     keywords = []
     for k in ["桥梁", "隧道", "路基", "路面", "抗震", "施工", "设计", "养护"]:
@@ -75,12 +79,14 @@ def extract_keywords(name):
             keywords.append(k)
     return keywords
 
+
 def detect_standard_nature(code):
     """根据标准规范编号检测标准性质"""
     if code.startswith("JTG "):
         return StandardNature.MANDATORY
     else:
         return StandardNature.RECOMMENDED
+
 
 def standard_specification_name_parser(state: MainState):
     """标准规范名称解析器"""

@@ -5,6 +5,7 @@ from utils.paragraph_util import to_text
 from cache.cache import cache_toc, exist_toc_cache, get_toc
 from role.toc import TOCInfo, TOC
 from utils.document_util import get_doc_page_index
+from utils.mineru_util import enhance
 from model.toc import TOC as TOCModel
 import logging
 import re
@@ -81,6 +82,7 @@ def toc_parser(state: PageState, runtime: Runtime[PageContext]):
     page_index = state.page_index
     page_count = _get_toc_page_count(page_index, page_list)
     toc_content = _get_content(page_index, page_count, page_list)
+    toc_content = enhance(toc_content)
     document_name = runtime.context.document_state.origin_document.name
     # 检查是否存在缓存
     if exist_toc_cache(state.specification_code, document_name, toc_content):

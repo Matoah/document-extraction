@@ -11,12 +11,13 @@ class CaptionSplitter(Splitter):
 
     def __init__(
             self,
+            doc_name: str,
             content: list[DocumentContentItem],
             min_token_count: int,
             token_count: int,
             max_token_count: int
     ):
-        super().__init__(content, min_token_count, token_count, max_token_count)
+        super().__init__(doc_name, content, min_token_count, token_count, max_token_count)
         self.chunks: list[Chunk] = []
 
     def _split_content_node_list(self, node_list: list[Node]):
