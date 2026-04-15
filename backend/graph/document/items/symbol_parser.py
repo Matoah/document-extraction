@@ -26,7 +26,7 @@ def symbol_parser(state: DocumentState):
                 symbol_content = [content]
                 symbol_children = get_symbol_child(index, text_level, content_list)
                 symbol_content.extend(symbol_children)
-                index += len(symbol_children)
+                index += max(len(symbol_children), 1)
                 symbol_script = "\n".join([term_item.to_md_script() for term_item in symbol_content])
                 if symbol_script:
                     if exist_symbol_cache(state.spec_code, state.document.name, symbol_script):

@@ -99,7 +99,7 @@ def _parser_by_paragraph(state: DocumentState):
                 term_content = [content]
                 term_children = get_term_child(index, text_level, content_list)
                 term_content.extend(term_children)
-                index += len(term_children)
+                index += max(len(term_children), 1)
                 term_script = "\n".join([term_item.to_md_script() for term_item in term_content])
                 if term_script:
                     if exist_term_cache(state.spec_code, state.document.name, term_script):

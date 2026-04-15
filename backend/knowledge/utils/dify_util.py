@@ -70,7 +70,7 @@ def get_dataset_id():
         for dataset in data:
             if dataset["name"] == dataset_name:
                 return dataset["id"]
-    raise ValueError(f"知识库 {dataset_name} 不存在")
+    raise ValueError(f"知识库【{dataset_name}】不存在")
 
 def _get_mime_type(ext: str) ->str:
     """获取文件扩展名对应的MIME类型"""
@@ -123,6 +123,8 @@ def _create_empty_document_by_file(dataset_id: str, document_name: str) -> str:
     with tempfile.TemporaryDirectory() as tmp_dir_name:
         document_file_path = os.path.join(tmp_dir_name, document_name)
         file = open(document_file_path, "wb")
+        file.write(b"test")
+        file.flush()
         file.close()
         headers = {
             "Authorization": f"Bearer {os.getenv("KNOWLEDGE_API_KEY")}",
@@ -142,10 +144,9 @@ def _create_empty_document_by_file(dataset_id: str, document_name: str) -> str:
                         "max_tokens": 1024
                     },
                     "parent_mode": "paragraph",
-
+                    "subchunk_segmentation": {'separator': '\n', 'max_tokens': 512}
                 },
                 "mode": "hierarchical",
-                "subchunk_segmentation": {'separator': '\n', 'max_tokens': 512}
             }
         }
 
@@ -182,7 +183,7 @@ def get_document_status(dataset_id: str, batch: str) -> str:
     data = result.get("data",[])
     return data[0].get('indexing_status')
 
-def _create_empty_document_by_text(dataset_id: str, document_name: str, chunk_list: list[str]) -> tuple[str, str]:
+def _create_document_by_text(dataset_id: str, document_name: str, chunk_list: list[str]) -> tuple[str, str]:
     """创建空文档"""
     headers = {
         "Authorization": f"Bearer {os.getenv("KNOWLEDGE_API_KEY")}",
@@ -209,7 +210,7 @@ def _create_empty_document_by_text(dataset_id: str, document_name: str, chunk_li
                 "parent_mode": "paragraph",
                 "subchunk_segmentation": {'separator': '\n', 'max_tokens': 512}
             },
-            "mode": "hierarchical",
+            "mode": "automatic"#"hierarchical",
         }
     }
     try:
@@ -225,7 +226,12 @@ def _create_empty_document_by_text(dataset_id: str, document_name: str, chunk_li
 
 def create_document(dataset_id: str, document_name: str, chunk_list: list[str]) -> tuple[str, str]:
     """创建文档"""
-    return _create_empty_document_by_text(dataset_id, document_name, chunk_list)
+    #return _create_document_by_text(dataset_id, document_name, chunk_list)
+    # aix环境版本比较低，需要使用create-by-file接口
+    document_id = _create_empty_document_by_file(dataset_id, document_name)
+    upload_document_segments(dataset_id, document_id, chunk_list)
+    return "", document_id
+
 
 # 知识库文档列表缓存
 document_list: list[dict] | None = None

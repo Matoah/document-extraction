@@ -72,7 +72,11 @@ class Dataset:
             if doing_result:
                 for result in doing_result:
                     statistics_info[result.status] -= 1
-                    status = get_document_status(dataset_id, result.batch)
+                    batch = result.batch
+                    if batch:
+                        status = get_document_status(dataset_id, batch)
+                    else:
+                        status = DocumentStatus.COMPLETED
                     result.status = DocumentStatus(status)
                     statistics_info[result.status] += 1
             else:
