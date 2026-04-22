@@ -4,6 +4,7 @@ from model.document import Document
 import logging
 from model.standard_specification import StandardSpecification
 from langgraph.graph import StateGraph, START, END
+from graph.document.items.document_name_parser import document_name_parser
 from graph.document.items.document_parser import document_paser
 from graph.document.items.toc_parser import toc_parser
 from graph.document.items.term_parser import term_parser
@@ -15,12 +16,14 @@ from langchain_core.runnables import RunnableConfig
 logger = logging.getLogger(__file__)
 
 builder = StateGraph(DocumentState)
+builder.add_node(document_name_parser)
 builder.add_node(document_paser)
 builder.add_node(toc_parser)
 builder.add_node(term_parser)
 builder.add_node(symbol_parser)
 
-builder.add_edge(START, "document_paser")
+builder.add_edge(START, "document_name_parser")
+builder.add_edge("document_name_parser", "document_paser")
 builder.add_edge("document_paser", "toc_parser")
 builder.add_edge("toc_parser", "term_parser")
 builder.add_edge("toc_parser", "symbol_parser")

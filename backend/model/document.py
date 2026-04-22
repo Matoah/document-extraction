@@ -31,6 +31,22 @@ class Document(BaseModel):
 
     md5: str = Field(description="文档md5码")
 
+    approved_by: str = Field(description="批准部门", default="")
+
+    release_date: str = Field(description="发布日期", default="")
+
+    effective_date: str = Field(description="实施日期", default="")
+
+    category: str = Field(description="分类", default="")
+
+    subcategory: str = Field(description="子分类", default="")
+
+    type: str = Field(description="类型", default="")
+
+    keywords: list[str] = Field(description="关键词", default_factory=list)
+
+    stage: str = Field(description="生命周期阶段", default="")
+
     chief_editor: list[Person] = Field(default_factory=list, description="主编")
 
     main_contributors: list[Person] = Field(default_factory=list, description="主要参编人员")

@@ -22,7 +22,7 @@ def parse_document():
 
     file_name = "现行公路工程行业标准.xlsx"
 
-    file_path = Path(__file__).resolve().parent.parent / file_name
+    file_path = Path(__file__).resolve().parent.parent.parent / file_name
 
     standard_specification_config_list = parse_excel(file_path)
 

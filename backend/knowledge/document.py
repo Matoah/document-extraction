@@ -1,3 +1,5 @@
+import traceback
+
 from pydantic import BaseModel, Field
 from enums.document_status import DocumentStatus
 import logging
@@ -22,11 +24,11 @@ class DocumentImportResult(BaseModel):
 
 class Document:
 
-    def __init__(self, dataset_id: str, spec_code: str, data: dict, md5_metadata: Metadata) -> None:
+    def __init__(self, dataset_id: str, spec_code: str, data: dict, metadata_list: list[Metadata]) -> None:
         self._dataset_id = dataset_id
         self._spec_code = spec_code
         self._data = data
-        self._md5_metadata = md5_metadata
+        self._metadata_list = metadata_list
         self.min_token_count = int(os.getenv("KNOWLEDGE_MIN_TOKEN_COUNT"))
         self.token_count = int(os.getenv("KNOWLEDGE_TOKEN_COUNT"))
         self.max_token_count = int(os.getenv("KNOWLEDGE_MAX_TOKEN_COUNT"))
@@ -64,16 +66,23 @@ class Document:
             need_upload = True
         return need_upload
 
-    def _update_document_md5_metadata(self, document_id: str):
+    def _update_document_metadata(self, document_id: str):
         """更新文档md5元数据"""
+        md5_metadata = next((metadata for metadata in self._metadata_list if metadata.get("name") == "md5"), None)
+        spec_code_metadata = next((metadata for metadata in self._metadata_list if metadata.get("name") == "spec_code"), None)
         update_document_metadata(self._dataset_id, [{
             "document_id": document_id,
             "metadata_list": [
                 {
-                    "id": self._md5_metadata.get("id"),
+                    "id": md5_metadata.get("id"),
                     "name": "md5",
                     "type": "string",
                     "value": self._data.get("md5")
+                },{
+                    "id": spec_code_metadata.get("id"),
+                    "name": "spec_code",
+                    "type": "string",
+                    "value": self._spec_code
                 }
             ],
             "partial_update": True
@@ -97,15 +106,15 @@ class Document:
         """获取文档Markdown内容"""
         chunk_list = self._get_document_chunk_list()
         batch, document_id = create_document(self._dataset_id, self._data.get("name"), chunk_list)
-        self._update_document_md5_metadata(document_id)
+        self._update_document_metadata(document_id)
         return batch, document_id
 
     def import_data(self) -> DocumentImportResult:
         """导入数据"""
         doc_name = self._data.get("name")
         logger.info(f"开始处理文档【{doc_name}】")
-        need_upload = self._is_need_upload()
         knowledge_document_list = get_document_list(self._dataset_id)
+        need_upload = self._is_need_upload()
         document_info = next((doc for doc in knowledge_document_list if doc.get("name") == doc_name), None)
         if need_upload:
             batch, document_id = self._import()

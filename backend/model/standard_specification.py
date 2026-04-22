@@ -15,22 +15,6 @@ class StandardSpecification(BaseModel):
 
     standard_nature: StandardNature = Field(description="标准规范类型", default=StandardNature.MANDATORY)
 
-    approved_by: str = Field(description="批准部门", default="")
-
-    release_date: str = Field(description="发布日期", default="")
-
-    effective_date: str = Field(description="实施日期", default="")
-
-    category_level_1: str = Field(description="一级分类", default="")
-
-    category_level_2: str = Field(description="二级分类", default="")
-
-    type: str = Field(description="类型", default="")
-
-    keywords: list[str] = Field(description="关键词", default_factory=list)
-
-    stage: str = Field(description="生命周期阶段", default="")
-
     domain: str = Field(description="适用领域", default="公路工程")
 
     @classmethod

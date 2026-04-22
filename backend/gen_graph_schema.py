@@ -100,35 +100,34 @@ def format_relationships(rels):
 
 
 schema_text = f"""Graph Schema:
-
-Nodes:
+节点定义:
 {format_nodes(nodes)}
 
-Relationships:
+关系定义:
 {format_relationships(relationships)}
 """
 
 print(schema_text)
 
 # ====== 4. 生成 LLM Prompt ======
-prompt = f"""
-You are a Neo4j expert.
-
-Use ONLY the following graph schema to generate Cypher queries.
-
-{schema_text}
-
-Rules:
-1. Only use the provided node labels, relationship types, and properties
-2. Do NOT use CREATE, DELETE, MERGE
-3. Always add LIMIT 50
-4. Avoid full graph scan
-5. Prefer using indexed properties if possible
-
-Return ONLY Cypher query.
-"""
-
-print("\n" + "=" * 50)
-print("LLM PROMPT:")
-print("=" * 50)
-print(prompt)
+# prompt = f"""
+# You are a Neo4j expert.
+#
+# Use ONLY the following graph schema to generate Cypher queries.
+#
+# {schema_text}
+#
+# Rules:
+# 1. Only use the provided node labels, relationship types, and properties
+# 2. Do NOT use CREATE, DELETE, MERGE
+# 3. Always add LIMIT 50
+# 4. Avoid full graph scan
+# 5. Prefer using indexed properties if possible
+#
+# Return ONLY Cypher query.
+# """
+#
+# print("\n" + "=" * 50)
+# print("LLM PROMPT:")
+# print("=" * 50)
+# print(prompt)

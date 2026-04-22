@@ -1,5 +1,7 @@
 import os
 from requests import exceptions
+
+from enums.document_status import DocumentStatus
 from utils.request_util import post, get, delete
 from pathlib import Path
 import hashlib
@@ -9,6 +11,7 @@ import json
 import re
 import logging
 from typing import TypedDict, Any
+import time
 
 
 logger = logging.getLogger(__name__)
@@ -44,13 +47,17 @@ class Metadata(TypedDict):
     use_count: int
 
 
-def _post(uri: str, headers: dict, data: dict | None = None, files: dict | None = None, json: dict | None = None):
+def _post(uri: str, headers: dict, data: dict | None = None, files: dict | None = None, jsons: dict | None = None):
     """post请求"""
-    return post(f"{os.getenv("KNOWLEDGE_BASE_URI")}/{uri}",headers=headers,data=data,  files=files, json=json)
+    return post(f"{os.getenv("KNOWLEDGE_BASE_URI")}/{uri}",headers=headers,data=data,  files=files, json=jsons)
 
-def _get(uri: str, headers: dict, data: dict):
+def _get(uri: str, headers: dict, data: dict | None = None, jsons: dict | None = None):
     """get请求"""
-    return get(f"{os.getenv("KNOWLEDGE_BASE_URI")}/{uri}",headers=headers,params=data)
+    return get(f"{os.getenv("KNOWLEDGE_BASE_URI")}/{uri}",headers=headers,params=data, json=jsons)
+
+def _delete(uri: str, **kwargs: dict):
+    """delete请求"""
+    return delete(f"{os.getenv("KNOWLEDGE_BASE_URI")}/{uri}", **kwargs)
 
 def get_dataset_id():
     """获取知识库ID"""
@@ -118,14 +125,14 @@ def to_preview_url(file_id: str) -> str:
     """将文件ID转换为预览URL"""
     return f"{os.getenv('KNOWLEDGE_HOST')}/files/{file_id}/file-preview"
 
-def _create_empty_document_by_file(dataset_id: str, document_name: str) -> str:
+def _create_empty_document_by_file(dataset_id: str, document_name: str) -> tuple[str, str]:
     """创建空文档"""
     with tempfile.TemporaryDirectory() as tmp_dir_name:
-        document_file_path = os.path.join(tmp_dir_name, document_name)
-        file = open(document_file_path, "wb")
-        file.write(b"test")
-        file.flush()
-        file.close()
+        tmp_dir_path = Path(tmp_dir_name)
+        document_file_path = tmp_dir_path / document_name
+        source_file_path = Path(__file__).parent.parent/ "resources" / "样板文档.pdf"
+        # 复制文件到临时目录
+        document_file_path.write_bytes(source_file_path.read_bytes())
         headers = {
             "Authorization": f"Bearer {os.getenv("KNOWLEDGE_API_KEY")}",
         }
@@ -167,7 +174,7 @@ def _create_empty_document_by_file(dataset_id: str, document_name: str) -> str:
                 )
                 result = response.json()
                 document_info = result.get('document', {})
-                return document_info.get('id')
+                return result.get("batch"), document_info.get('id')
         except Exception as e:
             raise Exception(f"创建文档失败: {e}")
 
@@ -214,7 +221,7 @@ def _create_document_by_text(dataset_id: str, document_name: str, chunk_list: li
         }
     }
     try:
-        response = _post(uri=uri, headers=headers, json=data)
+        response = _post(uri=uri, headers=headers, jsons=data)
         result = response.json()
         document_info = result.get('document', {})
         document_id = document_info.get('id')
@@ -226,11 +233,32 @@ def _create_document_by_text(dataset_id: str, document_name: str, chunk_list: li
 
 def create_document(dataset_id: str, document_name: str, chunk_list: list[str]) -> tuple[str, str]:
     """创建文档"""
-    #return _create_document_by_text(dataset_id, document_name, chunk_list)
-    # aix环境版本比较低，需要使用create-by-file接口
-    document_id = _create_empty_document_by_file(dataset_id, document_name)
-    upload_document_segments(dataset_id, document_id, chunk_list)
-    return "", document_id
+    # return _create_document_by_text(dataset_id, document_name, chunk_list)
+    # aix环境版本比较低，使用create-by-file创建文档后，文档中无分段，需要手动上传分段
+    batch,document_id = _create_empty_document_by_file(dataset_id, document_name)
+    status = DocumentStatus.WAITING
+    while status not in [DocumentStatus.NO_CHANGED, DocumentStatus.COMPLETED, DocumentStatus.ERROR]:
+        # 等待一秒，更新状态
+        time.sleep(1)
+        status = DocumentStatus(get_document_status(dataset_id, batch))
+    if status == DocumentStatus.COMPLETED:
+        #先清空文档分段
+        # page = 1
+        # has_more = True
+        # while has_more:
+        #     document_segment = get_document_segments(dataset_id, document_id)
+        #     if document_segment:
+        #         has_more = document_segment.get('has_more', False)
+        #         segments = document_segment.get('segments', [])
+        #         for segment in segments:
+        #             segment_id = segment.get('id')
+        #             delete_document_segment(dataset_id, document_id, segment_id)
+        #         page += 1
+        #     else:
+        #         has_more = False
+        #文档已索引完成，上传分段落
+        upload_document_segments(dataset_id, document_id, chunk_list)
+    return batch, document_id
 
 
 # 知识库文档列表缓存
@@ -244,11 +272,19 @@ def get_document_list(dataset_id: str) -> list[dict]:
         headers = {
             'Authorization': f'Bearer {os.getenv("KNOWLEDGE_API_KEY")}',
         }
-        data = {
-            "limit": 1000
-        }
-        response = _get(uri=uri, headers=headers, data=data)
-        document_list = response.json().get("data", [])
+        has_more = True
+        page = 1
+        document_list = []
+        while has_more:
+            data = {
+                "limit": 20,
+                "page": page
+            }
+            response = _get(uri=uri, headers=headers, data=data)
+            response_data = response.json()
+            has_more = response_data.get("has_more", False)
+            document_list.extend(response_data.get("data", []))
+            page += 1
     return document_list
 
 def upload_document_segments(dataset_id: str, document_id: str, segments: list[str]) -> str:
@@ -263,27 +299,27 @@ def upload_document_segments(dataset_id: str, document_id: str, segments: list[s
         "segments": segments
     }
     try:
+        logger.info("正在创建文档分段，请稍候...")
         response = _post(
             uri=f"datasets/{dataset_id}/documents/{document_id}/segments",
             headers=headers,
-            json=data
+            jsons=data
         )
-        response.raise_for_status()
         result = response.json()
-        if 'data' in result:
-            for segment_data in result['data']:
-                segment_id = segment_data.get('id')
-                content = segment_data.get('content', '')
-                # 先删除子分段
-                # 检查内容是否超过4行需要切分
-                if segment_id and content:
-                    lines = content.split('\n')
-                    if len(lines) > 4:
-                        # 需要创建子分段
-                        _create_child_chunks_simple(
-                            dataset_id, document_id, segment_id, content
-                        )
-
+        # 上传后已经有子分段，无需再创建
+        # if 'data' in result:
+        #     for segment_data in result['data']:
+        #         segment_id = segment_data.get('id')
+        #         content = segment_data.get('content', '')
+        #         # 先删除子分段
+        #         # 检查内容是否超过4行需要切分
+        #         if segment_id and content:
+        #             lines = content.split('\n')
+        #             if len(lines) > 4:
+        #                 # 需要创建子分段
+        #                 _create_child_chunks_simple(
+        #                     dataset_id, document_id, segment_id, content
+        #                 )
         return result
     except exceptions.RequestException as e:
         raise Exception(f"上传文档分段失败: {e}")
@@ -317,7 +353,7 @@ def _create_child_chunks_simple(
                 response = _post(
                     uri=f"datasets/{dataset_id}/documents/{document_id}/segments/{segment_id}/child_chunks",
                     headers=headers,
-                    json=payload
+                    jsons=payload
                 )
                 response.raise_for_status()
                 logger.info(f"成功创建子分段 {i + 1}/{len(child_chunks)}: {segment_id}")
@@ -388,13 +424,12 @@ def get_dataset_metadata(dataset_id: str) -> list[dict]:
 
 def delete_document(dataset_id: str, document_id: str) -> None:
     """删除文档"""
-    uri = f"{os.getenv("KNOWLEDGE_BASE_URI")}/datasets/{dataset_id}/documents/{document_id}"
+    uri = f"datasets/{dataset_id}/documents/{document_id}"
     headers = {
         'Authorization': f'Bearer {os.getenv("KNOWLEDGE_API_KEY")}',
     }
     try:
-        response = delete(url=uri, headers=headers)
-        response.raise_for_status()
+        _delete(uri=uri, headers=headers)
         logger.info(f"成功删除文档 {document_id}")
     except exceptions.RequestException as e:
         raise Exception(f"删除文档失败: {e}")
@@ -417,7 +452,7 @@ def create_dataset_metadata(dataset_id: str, metadata: dict) -> Metadata:
         'Authorization': f'Bearer {os.getenv("KNOWLEDGE_API_KEY")}',
         'Content-Type': 'application/json'
     }
-    response = _post(uri=uri, headers=headers, json=metadata)
+    response = _post(uri=uri, headers=headers, jsons=metadata)
     result = response.json()
     return Metadata(**result)
 
@@ -433,6 +468,33 @@ def update_document_metadata(dataset_id: str, metadata: list[MetadataOperationDa
         "operation_data": metadata
     }
     try:
-        _post(uri=uri, headers=headers, json=data)
+        _post(uri=uri, headers=headers, jsons=data)
     except exceptions.RequestException as e:
         raise Exception(f"更新文档元数据失败：{e}")
+
+def get_document_segments(dataset_id: str, document_id: str, page: int = 1) -> dict:
+    """获取文档分段"""
+    uri = f"datasets/{dataset_id}/documents/{document_id}/segments"
+    headers = {
+        'Authorization': f'Bearer {os.getenv("KNOWLEDGE_API_KEY")}',
+    }
+    data = {
+        "page": page
+    }
+    response = _get(uri=uri, headers=headers, jsons=data)
+    result = response.json()
+    return {
+        "has_more": result.get("has_more", False),
+        "segments": result.get("data", [])
+    }
+
+def delete_document_segment(dataset_id: str, document_id: str, segment_id: str):
+    """删除文档分段"""
+    uri = f"datasets/{dataset_id}/documents/{document_id}/segments/{segment_id}"
+    headers = {
+        'Authorization': f'Bearer {os.getenv("KNOWLEDGE_API_KEY")}',
+        'Content-Type': 'application/json'
+    }
+    data = {}
+    _delete(uri=uri, headers=headers, jsons=data)
+    logger.info(f"成功删除文档分段：{segment_id}")

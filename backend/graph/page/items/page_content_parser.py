@@ -78,12 +78,12 @@ def page_content_parser(state: PageState, runtime: Runtime[PageContext]):
     page_list = runtime.context.page_list
     page_index = state.page_index
     page_content = _get_content(page_index, 1, page_list)
-    if not runtime.context.standard_specification.release_date and _has_release_date(page_content):
-        runtime.context.standard_specification.release_date = _get_release_date(page_content)
-    if not runtime.context.standard_specification.effective_date and _has_effective_date(page_content):
-        runtime.context.standard_specification.effective_date = _get_effective_date(page_content)
-    if not runtime.context.standard_specification.approved_by and _has_approved_by(page_content):
-        runtime.context.standard_specification.approved_by = _get_approved_by(page_content)
+    if not runtime.context.document_state.document.release_date and _has_release_date(page_content):
+        runtime.context.document_state.document.release_date = _get_release_date(page_content)
+    if not runtime.context.document_state.document.effective_date and _has_effective_date(page_content):
+        runtime.context.document_state.document.effective_date = _get_effective_date(page_content)
+    if not runtime.context.document_state.document.approved_by and _has_approved_by(page_content):
+        runtime.context.document_state.document.approved_by = _get_approved_by(page_content)
     return {}
 
 

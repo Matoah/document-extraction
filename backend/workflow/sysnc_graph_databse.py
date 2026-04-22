@@ -189,15 +189,6 @@ def gen_specification(spec, spec_config, graph: Graph):
         "模块": spec.get("module"),
         "名称": spec.get("name"),
         "标准规范类型": spec.get("standard_nature"),
-        "一级分类": spec.get("category_level_1"),
-        "二级分类": spec.get("category_level_2"),
-        "类型": type_mapping.get(spec.get("type")),
-        "生命周期阶段": spec.get("stage"),
-        "领域": spec.get("domain"),
-        "发布日期": spec.get("release_date"),
-        "实施日期": spec.get("effective_date"),
-        "批准部门": spec.get("approved_by"),
-        "关键字": ",".join(spec_config.get("keywords", [])),
     }
 
     merge_node(sid[0], sid[1], graph, props)
@@ -215,6 +206,15 @@ def gen_document(spec, docs, graph: Graph):
             "创建时间": d.get("create_time"),
             "修改时间": d.get("modify_time"),
             "文件唯一标识": d.get("md5"),
+            "分类": d.get("category"),
+            "子分类": d.get("subcategory"),
+            "类型": type_mapping.get(d.get("type")),
+            "生命周期阶段": d.get("stage"),
+            "领域": d.get("domain"),
+            "发布日期": d.get("release_date"),
+            "实施日期": d.get("effective_date"),
+            "批准部门": d.get("approved_by"),
+            "关键字": ",".join(d.get("keywords", [])),
         })
 
         merge_relationship(sid[0], sid[1], "关联文档", did[0], did[1], graph)
