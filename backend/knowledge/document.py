@@ -1,4 +1,5 @@
 import traceback
+from unicodedata import category
 
 from pydantic import BaseModel, Field
 from enums.document_status import DocumentStatus
@@ -70,6 +71,10 @@ class Document:
         """更新文档md5元数据"""
         md5_metadata = next((metadata for metadata in self._metadata_list if metadata.get("name") == "md5"), None)
         spec_code_metadata = next((metadata for metadata in self._metadata_list if metadata.get("name") == "spec_code"), None)
+        stage_metadata = next((metadata for metadata in self._metadata_list if metadata.get("name") == "stage"), None)
+        category_metadata = next((metadata for metadata in self._metadata_list if metadata.get("name") == "category"), None)
+        subcategory_metadata = next((metadata for metadata in self._metadata_list if metadata.get("name") == "subcategory"), None)
+        keyword_metadata = next((metadata for metadata in self._metadata_list if metadata.get("name") == "keyword"), None)
         update_document_metadata(self._dataset_id, [{
             "document_id": document_id,
             "metadata_list": [
@@ -83,6 +88,26 @@ class Document:
                     "name": "spec_code",
                     "type": "string",
                     "value": self._spec_code
+                },{
+                    "id": stage_metadata.get("id"),
+                    "name": "stage",
+                    "type": "string",
+                    "value": self._data.get("stage")
+                },{
+                    "id": category_metadata.get("id"),
+                    "name": "stage",
+                    "type": "string",
+                    "value": self._data.get("category")
+                },{
+                    "id": subcategory_metadata.get("id"),
+                    "name": "stage",
+                    "type": "string",
+                    "value": self._data.get("subcategory")
+                },{
+                    "id": keyword_metadata.get("id"),
+                    "name": "stage",
+                    "type": "string",
+                    "value": ",".join(self._data.get("keyword",[]))
                 }
             ],
             "partial_update": True
@@ -113,9 +138,7 @@ class Document:
         """导入数据"""
         doc_name = self._data.get("name")
         logger.info(f"开始处理文档【{doc_name}】")
-        knowledge_document_list = get_document_list(self._dataset_id)
         need_upload = self._is_need_upload()
-        document_info = next((doc for doc in knowledge_document_list if doc.get("name") == doc_name), None)
         if need_upload:
             batch, document_id = self._import()
             return DocumentImportResult(
@@ -125,9 +148,12 @@ class Document:
                 batch=batch
             )
         else:
+            knowledge_document_list = get_document_list(self._dataset_id)
+            document_info = next((doc for doc in knowledge_document_list if doc.get("name") == doc_name), None)
             logger.info(f"文档【{doc_name}】已存在且未改变，无需上传")
             return DocumentImportResult(
                 document_id=document_info.get("id"),
                 name=doc_name,
                 status=DocumentStatus.NO_CHANGED,
             )
+

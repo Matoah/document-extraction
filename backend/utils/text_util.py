@@ -82,3 +82,9 @@ def try_parse_json_object(text: str, verbose: bool = True) -> tuple[str, dict]:
             return text, result
     else:
         return text, result
+
+def is_chinese(char: str) -> bool:
+    """判断单个字符是否为中文（基本区）"""
+    if len(char) != 1:
+        return False
+    return 0x4E00 <= ord(char) <= 0x9FFF

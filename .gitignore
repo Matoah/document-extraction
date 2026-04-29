@@ -1,4 +1,11 @@
 .idea/
 .venv
+*/.venv/
 .env
 */.env
+cache_data/
+graph_script/
+knowledge_cache/
+markdown_cache/
+output/
+resources/

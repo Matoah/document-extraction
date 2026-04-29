@@ -9,7 +9,7 @@ from knowledge.dataset import Dataset
 logger = logging.getLogger(__name__)
 
 def upload_to_knowledge():
-    output_dir = Path(__file__).resolve().parent.parent / "output"
+    output_dir = Path(__file__).resolve().parent.parent.parent / "output"
 
     data_files = list(output_dir.glob("**/data.json"))
 

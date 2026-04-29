@@ -1,4 +1,6 @@
 import re
+import regex
+from pathlib import Path
 
 def _resolve_section(content: str) ->str:
     """增强处理节编号显示异常问题，将1?? 替换成1."""
@@ -30,16 +32,23 @@ def _resolve_book_mark(content: str) -> str:
     """处理书名号:«»->《》"""
     return content.replace("«","《").replace("»","》")
 
+def _resolve_break_line(content: str) -> str:
+    """处理换行符：汉字\n汉字->汉字汉字 """
+    return regex.sub(r"(\p{Han})\n(\p{Han})", r"\1\2", content)
+
 def enhance(content: str) -> str:
     """增强处理mineru结果"""
     if content.strip() == "":
         return content
+    if "\\u0000" in content:
+        raise ValueError("content包含异常字符，请处理！")
     content = _resolve_section(content)
     content = _resolve_semicolon(content)
     content = _resolve_comma(content)
     content = _resolve_period(content)
     content = _resolve_code(content)
     content = _resolve_book_mark(content)
+    #content = _resolve_break_line(content) 会导致公告、前言等内容换行符异常
     return content
 
 
@@ -65,3 +74,13 @@ if __name__ == "__main__":
     print(result=="表 6-1 中此次修订变化的说明如下:")
     result = _resolve_book_mark("«公路交通安全设施设计规范»( — ) 及 «公路交通安全设施设计细则» (JTG/T D81—2017) 的管理权和解释权归交通运输部")
     print(result=="《公路交通安全设施设计规范》( — ) 及 《公路交通安全设施设计细则》 (JTG/T D81—2017) 的管理权和解释权归交通运输部")
+    result = _resolve_break_line("你好\n世界")
+    print(result=="你好世界")
+
+
+    def upload_file(file_path: str|Path) -> str:
+        """
+        上传文件，返回在线url
+        :param file_path:
+        :return:
+        """

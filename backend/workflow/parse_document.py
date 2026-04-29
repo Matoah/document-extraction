@@ -8,6 +8,7 @@ import logging
 import traceback
 from graph.main.index import invoke
 import json
+import os
 
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,7 @@ def parse_document():
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    file_name = "现行公路工程行业标准.xlsx"
+    file_name = os.getenv("STANDARD_SPECIFICATION_CONFIG_FILE")
 
     file_path = Path(__file__).resolve().parent.parent.parent / file_name
 
@@ -30,7 +31,7 @@ def parse_document():
 
     for index, standard_specification_config in enumerate(standard_specification_config_list):
         try:
-            output_file_path = resolve_file_path(output_dir, standard_specification_config.code, file_name="data.json")
+            output_file_path = resolve_file_path(output_dir,standard_specification_config.domain, standard_specification_config.code, file_name="data.json")
             if skip_output_exist and output_file_path.exists():
                 logger.info(
                     f"标准规范【{standard_specification_config.code}】解析结果已存在，跳过处理 {index + 1}/{len(standard_specification_config_list)}")

@@ -10,8 +10,8 @@ load_dotenv()
 
 if __name__ == "__main__":
     # 1、 解析文档
-    #parse_document()
+    parse_document()
     # 2、 同步数据到图库
     sync_graph_database()
     # 3、 上传到知识库
-    #upload_to_knowledge()
+    upload_to_knowledge()

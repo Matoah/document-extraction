@@ -59,9 +59,8 @@ def _delete(uri: str, **kwargs: dict):
     """delete请求"""
     return delete(f"{os.getenv("KNOWLEDGE_BASE_URI")}/{uri}", **kwargs)
 
-def get_dataset_id():
+def get_dataset_id(dataset_name: str):
     """获取知识库ID"""
-    dataset_name = os.getenv("KNOWLEDGE_DATASET")
     has_more = True
     page = 1
     while has_more:
@@ -262,12 +261,12 @@ def create_document(dataset_id: str, document_name: str, chunk_list: list[str]) 
 
 
 # 知识库文档列表缓存
-document_list: list[dict] | None = None
+_document_list_cache: dict[str, list[dict]] = {}
 
 def get_document_list(dataset_id: str) -> list[dict]:
     """获取文档列表"""
-    global document_list
-    if document_list is None:
+    global _document_list_cache
+    if dataset_id not in _document_list_cache:
         uri = f"datasets/{dataset_id}/documents"
         headers = {
             'Authorization': f'Bearer {os.getenv("KNOWLEDGE_API_KEY")}',
@@ -285,7 +284,8 @@ def get_document_list(dataset_id: str) -> list[dict]:
             has_more = response_data.get("has_more", False)
             document_list.extend(response_data.get("data", []))
             page += 1
-    return document_list
+        _document_list_cache[dataset_id] = document_list
+    return _document_list_cache[dataset_id]
 
 def upload_document_segments(dataset_id: str, document_id: str, segments: list[str]) -> str:
     """创建文档段落"""

@@ -11,7 +11,7 @@ from knowledge.utils.html_util import split_table_by_token_count
 
 logger = logging.getLogger(__name__)
 
-PARAGRAPH_SPLIT_CHAR_LIST = ['\n', '。', '.', '；',';','!']  # 段落切分字符列表
+PARAGRAPH_SPLIT_CHAR_LIST = ['\n', '。', '.', '；',';','!', '?', '？']  # 段落切分字符列表
 
 class SizeSplitter(Splitter):
     """基于大小的切分器"""

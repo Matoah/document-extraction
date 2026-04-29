@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import openpyxl
 from openpyxl.cell import Cell
@@ -24,24 +25,26 @@ def parse_excel(excel_file: str | Path) -> list[StandardSpecificationConfig]:
     standard_items = []
     row = 3
     while row <= row_count:
-        code_cell = sheet.cell(row=row, column=3)
+        code_cell = sheet.cell(row=row, column=4)
         code = _get_merged_cell_value(sheet, code_cell)
         if code:
-            plate = _get_merged_cell_value(sheet, sheet.cell(row=row, column=1))
-            module = _get_merged_cell_value(sheet, sheet.cell(row=row, column=2))
-            name = _get_merged_cell_value(sheet, sheet.cell(row=row, column=4))
-            chief_org = _get_merged_cell_value(sheet, sheet.cell(row=row, column=5))
-            chief_editor = _get_merged_cell_value(sheet, sheet.cell(row=row, column=6))
-            contact_name = _get_merged_cell_value(sheet, sheet.cell(row=row, column=7))
-            contact_phone = _get_merged_cell_value(sheet, sheet.cell(row=row, column=8))
-            contact_email = _get_merged_cell_value(sheet, sheet.cell(row=row, column=9))
-            contact_address = _get_merged_cell_value(sheet, sheet.cell(row=row, column=10))
+            domain = _get_merged_cell_value(sheet, sheet.cell(row=row, column=1))
+            plate = _get_merged_cell_value(sheet, sheet.cell(row=row, column=2))
+            module = _get_merged_cell_value(sheet, sheet.cell(row=row, column=3))
+            name = _get_merged_cell_value(sheet, sheet.cell(row=row, column=5))
+            chief_org = _get_merged_cell_value(sheet, sheet.cell(row=row, column=6))
+            chief_editor = _get_merged_cell_value(sheet, sheet.cell(row=row, column=7))
+            contact_name = _get_merged_cell_value(sheet, sheet.cell(row=row, column=8))
+            contact_phone = _get_merged_cell_value(sheet, sheet.cell(row=row, column=9))
+            contact_email = _get_merged_cell_value(sheet, sheet.cell(row=row, column=10))
+            contact_address = _get_merged_cell_value(sheet, sheet.cell(row=row, column=11))
             file_names = []
             merged_row_count = _get_merged_row_count(sheet, code_cell)
             for delta in range(0, merged_row_count):
-                file_name = _get_merged_cell_value(sheet, sheet.cell(row=row+delta, column=11))
+                file_name = _get_merged_cell_value(sheet, sheet.cell(row=row+delta, column=12))
                 file_names.append(file_name)
             standard_items.append(StandardSpecificationConfig(
+                domain=domain,
                 plate=plate,
                 module=module,
                 code=code,
@@ -79,6 +82,10 @@ def _get_merged_cell_value(ws: Worksheet, cell: Cell):
 
 
 if __name__ == "__main__":
-    standard_items = parse_excel(str(Path(__file__).parent.parent / "现行公路工程行业标准.xlsx"))
-    print(standard_items)
+    from dotenv import load_dotenv
+    load_dotenv()
+    _file_name = os.getenv("STANDARD_SPECIFICATION_CONFIG_FILE")
+    _standard_items = parse_excel(str(Path(__file__).parent.parent.parent / _file_name))
+    for standard_item in _standard_items:
+        print(standard_item)
 
