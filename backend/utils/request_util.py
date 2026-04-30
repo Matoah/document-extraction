@@ -1,6 +1,7 @@
 import time
 import logging
 from requests import post as post_request, get as get_request, delete as delete_request, Response
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +13,8 @@ delete_request_time = {}
 
 def wait_until_valid(url: str, pool: dict):
     """等待当前url可请求,避免被服务识别成CC攻击（同一个请求60s内请求超过120次）"""
+    if os.getenv("KNOWLEDGE_AVOID_DOS_ATTACK", "True").lower() == "false":
+        return
     now_time = time.time()
     if url in pool:
         pre_time = pool[url]

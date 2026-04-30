@@ -113,6 +113,10 @@ class Document:
             "partial_update": True
         }])
 
+    def _is_empty_chunk(self, chunk: str) -> bool:
+        """判断是否为空分块,判断依据：分块内容为空或者全部为空格或换行符"""
+        return chunk == "" or chunk.isspace()
+
     def _get_document_chunk_list(self) -> list[str]:
         """获取文档分块列表"""
         doc_name = self._data.get("name")
@@ -120,10 +124,12 @@ class Document:
         if exist_markdown(self._spec_code, doc_name):
             content = get_markdown(self._spec_code, doc_name)
             chunk_list = content.split(splitter_str)
+            chunk_list = [chunk for chunk in chunk_list if not self._is_empty_chunk(chunk)]
         else:
             content_list = [create(item) for item in self._data.get("content_list", [])]
             splitter = SizeSplitter(doc_name, content_list, self.min_token_count, self.token_count, self.max_token_count)
             chunk_list = splitter.split()
+            chunk_list = [chunk for chunk in chunk_list if not self._is_empty_chunk(chunk)]
             cache_markdown(self._spec_code, doc_name, splitter_str.join(chunk_list))
         return chunk_list
 
@@ -156,4 +162,3 @@ class Document:
                 name=doc_name,
                 status=DocumentStatus.NO_CHANGED,
             )
-

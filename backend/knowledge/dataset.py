@@ -117,10 +117,10 @@ class Dataset:
         dataset_config = os.getenv("KNOWLEDGE_DATASET")
         dataset_dict = json.loads(dataset_config)
         for i, spec_data in enumerate(self._spec_data_list):
+            spec_code = spec_data.get("standard_specification").get("code")
             dataset_name = dataset_dict.get(spec_data.get("standard_specification_config",{}).get("domain"))
             dataset_id = self._get_dataset_id(dataset_name)
             metadata_list = self._get_metadata_list(dataset_id)
-            spec_code = spec_data.get("standard_specification").get("code")
             logger.info(f"正在处理标准规范：{spec_code} {i + 1}/{len(self._spec_data_list)}")
             document_list = spec_data.get("document_list", [])
             for document in document_list:
